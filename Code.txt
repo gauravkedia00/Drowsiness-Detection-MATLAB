@@ -1,0 +1,89 @@
+clc;
+clear;
+
+%Initial Video Reading & conversion into images with respect to frames
+vid = VideoReader('C:\Users\ORANE\Downloads\Magic\magic.mp4');
+lastFrame = read(vid, inf);
+n = vid.NumberOfFrames;
+EyeDetect = vision.CascadeObjectDetector('EyePairBig'); %Eye detection object
+ 
+for x = 1:2:n        % i = initial value : iteration value(iteration count) : end value
+   frames = read(vid,x);
+   imwrite(frames,['Image' int2str(x), '.jpg']);
+   im(x)=image(frames);
+end
+
+%Iterative processing of each image being created
+folder = 'C:\Users\Orane\Downloads\Magic';
+
+for x = 1:2:n
+path = strcat(folder,'\', 'Image', int2str(x), '.jpg');
+I = imread(path);
+BB=step(EyeDetect,I);
+subplot(3,1,1),imshow(I);
+%figure,imshow(I);
+rectangle('Position',BB,'LineWidth',2,'LineStyle','-','EdgeColor','b');
+title('Eyes Detection')
+Eyes=imcrop(I,BB);
+subplot(3,1,2),imshow(Eyes);
+%figure,imshow(Eyes);
+
+
+%Splitting the image into RGB Channels
+    Red = Eyes(:,:,1);    %Red Channel
+    Green = Eyes(:,:,2);  %Green Channel
+    Blue = Eyes(:,:,3);   %Blue Channel
+    
+%Getting Histogram Values for each channel ([counts,binLocations] = imhist(I) returns the histogram counts in counts and the bin locations in binLocations so that stem(binLocations,counts) shows the histogram. For indexed images, imhist returns the histogram counts for each colormap entry. The length of counts is the same as the length of the colormap.)
+    [yRed, Ry] = imhist(Red);
+    [yGreen, Gy] = imhist(Green);
+    [yBlue, By] = imhist(Blue);
+    
+%Condition setting with respect to obtained RGB values
+    %plot(Ry, yRed, 'Red', Gy, yGreen, 'Green', By, yBlue, 'Blue');
+    [d, e, f] = size(Eyes);
+    segment = zeros(d,e); %Returns a matrix of m x n size with values zeros
+    
+%For loop to eliminate skin colour
+    for i =1:d
+        for j = 1:e
+            if(Red(i,j) <80 && Red(i,j) > 50 && Green(i,j) < 100 && Green(i,j) > 0 && Blue(i,j) < 100 && Blue(i,j) > 15)
+            segment(i,j) = 255; %If RGB values are as per conditions then make value at that position as white
+            end
+        end
+    end
+    subplot(3,1,3),imshow(segment);
+    %imshow(segment);
+    
+%counting black & white pixels
+
+numberOfPixels = numel(segment);
+numberOfWhitePixels = sum(segment(:))/255;
+
+P= 'Total pixels in image are';
+disp(P);
+disp(numberOfPixels);
+
+Q = 'Total number of white(True) pixels are ';
+disp(Q);
+disp(numberOfWhitePixels);
+
+%calculating Ratio
+
+Ratio = numberOfWhitePixels/numberOfPixels;
+R = 'Ratio of number of white pixels to Total pixels in image in % is:';
+disp(R);
+disp(Ratio*100);
+
+%condition matching
+end
+
+
+
+
+
+
+
+
+
+
